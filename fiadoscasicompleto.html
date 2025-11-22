@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Fiados - Mura</title>
+
+<style>
+    body { 
+        font-family: Arial, sans-serif; 
+        margin: 0; 
+        padding: 20px; 
+        background: #f4f4f4; 
+        color: #333; 
+        transition: background 0.3s, color 0.3s; 
+    }
+    body.dark { 
+        background: #333; 
+        color: #f4f4f4; 
+    }
+
+    h1, h2, h3, h4 { 
+        text-align: center; 
+        margin-bottom: 20px; 
+    }
+
+    .menu { 
+        display: flex; 
+        justify-content: center; 
+        flex-wrap: wrap; 
+        gap: 10px; 
+        margin-bottom: 20px; 
+    }
+
+    .menu button { 
+        padding: 10px 20px; 
+        background: #007bff; 
+        color: white; 
+        border: none; 
+        border-radius: 5px; 
+        cursor: pointer; 
+        transition: background 0.3s; 
+    }
+
+    .menu button:hover { background: #0056b3; }
+    body.dark .menu button { background: #444; }
+    body.dark .menu button:hover { background: #666; }
+
+    .seccion { 
+        display: none; 
+        background: white; 
+        padding: 20px; 
+        border-radius: 10px; 
+        box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+        max-width: 800px; 
+        margin: 0 auto; 
+    }
+
+    body.dark .seccion { background: #444; color: #f4f4f4; }
+
+    input, select { 
+        padding: 10px; 
+        margin: 10px 0; 
+        width: 100%; 
+        box-sizing: border-box; 
+        border: 1px solid #ccc; 
+        border-radius: 5px; 
+    }
+
+    body.dark input, body.dark select { background: #555; color: #f4f4f4; border-color: #666; }
+
+    button { 
+        padding: 10px 20px; 
+        background: #28a745; 
+        color: white; 
+        border: none; 
+        border-radius: 5px; 
+        cursor: pointer; 
+        margin: 5px; 
+        transition: background 0.3s; 
+    }
+
+    button:hover { background: #218838; }
+    body.dark button { background: #666; }
+    body.dark button:hover { background: #888; }
+
+    table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+    table, th, td { border: 1px solid #ccc; }
+    th, td { padding: 10px; text-align: left; }
+
+    body.dark table, body.dark th, body.dark td { border-color: #666; }
+    th { background: #f8f9fa; }
+    body.dark th { background: #555; }
+
+    .filter { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 10px; 
+        margin-bottom: 20px; 
+    }
+
+    .cliente-cuadro { 
+        margin-bottom: 30px; 
+        padding: 15px; 
+        border: 1px solid #ddd; 
+        border-radius: 5px; 
+        background: #fafafa; 
+    }
+
+    body.dark .cliente-cuadro { border-color: #666; background: #555; }
+
+    .ticket { 
+        display: none; 
+        position: fixed; 
+        top: 50%; 
+        left: 50%; 
+        transform: translate(-50%, -50%); 
+        background: white; 
+        padding: 20px; 
+        border-radius: 10px; 
+        box-shadow: 0 0 20px rgba(0,0,0,0.5); 
+        max-width: 400px; 
+        z-index: 1000; 
+    }
+
+    body.dark .ticket { background: #444; }
+
+    .overlay { 
+        display: none; 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%; 
+        background: rgba(0,0,0,0.5); 
+        z-index: 999; 
+    }
+
+    /* LOGIN OVERLAY */
+    #loginOverlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.95);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2147483647;
+    }
+    #loginCard {
+        background: #111;
+        color: #fff;
+        padding: 22px;
+        border-radius: 8px;
+        width: 320px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+        text-align: center;
+    }
+    #loginCard input[type="password"],
+    #loginCard input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-top: 12px;
+        border-radius: 6px;
+        border: 1px solid #333;
+        background: #222;
+        color: #fff;
+    }
+    #loginCard button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 12px;
+        border-radius: 6px;
+        border: none;
+        background: #00bfff;
+        color: #111;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    #loginError {
+        color: #ff6b6b;
+        margin-top: 10px;
+        display: none;
+    }
+
+    #showPassBtn {
+        margin-top: 10px;
+        background: #444;
+        color: white;
+        width: 100%;
+        padding: 7px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginOverlay">
+    <div id="loginCard">
+        <h2>Acceso al Sistema</h2>
+
+        <input id="loginPassword" type="password" placeholder="Ingrese contraseña">
+
+        <!-- BOTÓN MOSTRAR / OCULTAR -->
+        <button id="showPassBtn">👁 Mostrar Contraseña</button>
+
+        <button id="loginBtn">Ingresar</button>
+        <div id="loginError">Contraseña incorrecta</div>
+    </div>
+</div>
+
+<button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+
+<h1>Sistema de Fiados - Polirubro El Mura</h1>
+
+<div class="menu">
+    <button onclick="mostrar('clientes')">Registrar Cliente</button>
+    <button onclick="mostrar('fiados')">Registrar Fiado</button>
+    <button onclick="mostrar('deudas')">Ver Deudas</button>
+</div>
+
+<!-- ================= CLIENTES ================= -->
+<div id="clientes" class="seccion">
+    <h2>Registrar Cliente</h2>
+
+    <input id="clienteNombre" type="text" placeholder="Nombre del cliente">
+    <input id="clienteTelefono" type="text" placeholder="Teléfono">
+
+    <button onclick="guardarCliente()">Guardar Cliente</button>
+
+    <h3>Lista de Clientes</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tablaClientes"></tbody>
+    </table>
+</div>
+
+<!-- ================= FIADOS ================= -->
+<div id="fiados" class="seccion">
+    <h2>Registrar Fiado</h2>
+    <select id="selectCliente"></select>
+    <input id="producto" type="text" placeholder="Producto fiado">
+    <input id="monto" type="number" placeholder="Monto ($)">
+    <button onclick="guardarFiado()">Guardar Fiado</button>
+</div>
+
+<!-- ================= DEUDAS ================= -->
+<div id="deudas" class="seccion">
+    <h2>Deudas Registradas</h2>
+    
+    <div class="filter">
+        <input type="text" id="buscarCliente" placeholder="Buscar cliente..." oninput="buscarClienteEnDeudas()">
+        <select id="filtroCliente" onchange="cargarDeudas()">
+            <option value="">Todos los clientes</option>
+        </select>
+
+        <button onclick="pagarDeuda()">Pagar Deuda</button>
+    </div>
+
+    <h3>Resumen de Deudas por Cliente</h3>
+    <table id="resumenDeudas">
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Total Deuda</th>
+            </tr>
+        </thead>
+        <tbody id="tablaResumen"></tbody>
+    </table>
+
+    <h3>Detalles de Deudas</h3>
+    <div id="detallesDeudas"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="cerrarTicket()"></div>
+<div class="ticket" id="ticket">
+    <h3>Ticket de Pago</h3>
+    <p id="ticketCliente"></p>
+    <p id="ticketTotal"></p>
+    <p>Fecha: <span id="ticketFecha"></span></p>
+    <button onclick="imprimirTicket()">Imprimir</button>
+    <button onclick="cerrarTicket()">Cerrar</button>
+</div>
+
+<!-- LOGIN SCRIPT -->
+<script>
+document.getElementById('loginBtn').addEventListener('click', function() {
+    const pass = document.getElementById('loginPassword').value;
+    const overlay = document.getElementById('loginOverlay');
+    const err = document.getElementById('loginError');
+
+    if (pass === 'beatriz24') {
+        overlay.style.display = 'none';
+        err.style.display = 'none';
+    } else {
+        err.style.display = 'block';
+    }
+});
+
+/* ENTER */
+document.getElementById('loginPassword').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('loginBtn').click();
+    }
+});
+
+/* MOSTRAR CONTRASEÑA */
+document.getElementById("showPassBtn").addEventListener("click", function () {
+    const campo = document.getElementById("loginPassword");
+    if (campo.type === "password") {
+        campo.type = "text";
+        this.textContent = "🙈 Ocultar Contraseña";
+    } else {
+        campo.type = "password";
+        this.textContent = "👁 Mostrar Contraseña";
+    }
+});
+</script>
+
+<!-- FIREBASE -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { 
+        getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCfers5wKHg7GVlTgJKB3jdvttF-vE5xxk",
+      authDomain: "sistemafiadosmura.firebaseapp.com",
+      projectId: "sistemafiadosmura",
+      storageBucket: "sistemafiadosmura.appspot.com",
+      messagingSenderId: "897458513968",
+      appId: "1:897458513968:web:4117fa3b4861ad7264e5f5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.toggleTheme = function() {
+        document.body.classList.toggle('dark');
+        const toggle = document.querySelector('.theme-toggle');
+        toggle.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+    };
+
+    window.mostrar = function(id) {
+        document.querySelectorAll(".seccion").forEach(s => s.style.display = "none");
+        document.getElementById(id).style.display = "block";
+
+        if (id === "clientes") cargarClientesTabla();
+        if (id === "fiados") cargarClientesSelect();
+        if (id === "deudas") {
+            cargarClientesFiltro();
+            cargarDeudas();
+        }
+    };
+
+    window.guardarCliente = async function () {
+        const nombre = document.getElementById("clienteNombre").value;
+        const tel = document.getElementById("clienteTelefono").value;
+
+        if (nombre === "") { alert("Escribe un nombre."); return; }
+
+        await addDoc(collection(db, "clientes"), {
+            nombre: nombre,
+            telefono: tel
+        });
+
+        alert("Cliente guardado");
+        cargarClientesTabla();
+    };
+
+    async function cargarClientesTabla() {
+        const tabla = document.getElementById("tablaClientes");
+        tabla.innerHTML = "";
+
+        const snap = await getDocs(collection(db, "clientes"));
+        snap.forEach(d => {
+            const c = d.data();
+            tabla.innerHTML += `
+                <tr>
+                    <td>${c.nombre}</td>
+                    <td>${c.telefono}</td>
+                    <td>
+                        <button onclick="editarCliente('${d.id}', '${c.nombre}', '${c.telefono}')">Editar</button>
+                        <button onclick="eliminarCliente('${d.id}')">Eliminar</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    window.editarCliente = function(id, nombre, tel) {
+        const nuevoNombre = prompt("Nuevo nombre:", nombre);
+        if (!nuevoNombre) return;
+
+        const nuevoTel = prompt("Nuevo teléfono:", tel);
+        if (nuevoTel === null) return;
+
+        updateDoc(doc(db, "clientes", id), {
+            nombre: nuevoNombre,
+            telefono: nuevoTel
+        }).then(() => cargarClientesTabla());
+    };
+
+    window.eliminarCliente = async function (id) {
+        if (!confirm("¿Seguro?")) return;
+        await deleteDoc(doc(db, "clientes", id));
+        cargarClientesTabla();
+    };
+
+    async function cargarClientesSelect() {
+        const select = document.getElementById("selectCliente");
+        select.innerHTML = "";
+
+        const snap = await getDocs(collection(db, "clientes"));
+        snap.forEach(doc => {
+            const c = doc.data();
+            select.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`;
+        });
+    }
+
+    async function cargarClientesFiltro() {
+        const select = document.getElementById("filtroCliente");
+        select.innerHTML = "<option value=''>Todos</option>";
+
+        const snap = await getDocs(collection(db, "clientes"));
+        snap.forEach(doc => {
+            const c = doc.data();
+            select.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`;
+        });
+    }
+
+    window.guardarFiado = async function () {
+        const cliente = document.getElementById("selectCliente").value;
+        const producto = document.getElementById("producto").value;
+        const monto = document.getElementById("monto").value;
+
+        if (!cliente || !producto || !monto) {
+            alert("Completa todos.");
+            return;
+        }
+
+        await addDoc(collection(db, "fiados"), {
+            cliente: cliente,
+            producto: producto,
+            monto: Number(monto),
+            fecha: new Date().toLocaleString()
+        });
+
+        alert("Fiado guardado");
+        document.getElementById("producto").value = "";
+        document.getElementById("monto").value = "";
+    };
+
+    async function cargarDeudas() {
+        const resumen = document.getElementById("tablaResumen");
+        const detalles = document.getElementById("detallesDeudas");
+        const filtro = document.getElementById("filtroCliente").value;
+        resumen.innerHTML = "";
+        detalles.innerHTML = "";
+
+        let q = collection(db, "fiados");
+        if (filtro) q = query(q, where("cliente", "==", filtro));
+
+        const snap = await getDocs(q);
+        const totales = {};
+        const detallesPorCliente = {};
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (!totales[d.cliente]) {
+                totales[d.cliente] = 0;
+                detallesPorCliente[d.cliente] = [];
+            }
+            totales[d.cliente] += d.monto;
+            detallesPorCliente[d.cliente].push({ id: doc.id, producto: d.producto, monto: d.monto, fecha: d.fecha });
+        });
+
+        for (const cliente in totales) {
+            resumen.innerHTML += `
+                <tr>
+                    <td>${cliente}</td>
+                    <td>$${totales[cliente]}</td>
+                </tr>`;
+        }
+
+        for (const cliente in detallesPorCliente) {
+            const fiados = detallesPorCliente[cliente];
+            let tablaHTML = `<table><thead><tr><th>Producto</th><th>Monto</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>`;
+            fiados.forEach(f => {
+                tablaHTML += `
+                    <tr>
+                        <td>${f.producto}</td>
+                        <td>$${f.monto}</td>
+                        <td>${f.fecha}</td>
+                        <td><button onclick="eliminarFiado('${f.id}')">Eliminar</button></td>
+                    </tr>`;
+            });
+            tablaHTML += `</tbody></table>`;
+            detalles.innerHTML += `
+                <div class="cliente-cuadro">
+                    <h4>Cliente: ${cliente}</h4>
+                    ${tablaHTML}
+                </div>`;
+        }
+    }
+
+    window.eliminarFiado = async function (id) {
+        if (!confirm("¿Seguro?")) return;
+        await deleteDoc(doc(db, "fiados", id));
+        cargarDeudas();
+    };
+
+    window.pagarDeuda = async function() {
+        const filtro = document.getElementById("filtroCliente").value;
+        if (!filtro) { alert("Selecciona un cliente."); return; }
+
+        if (!confirm(`¿Pagar la deuda de ${filtro}?`)) return;
+
+        const q = query(collection(db, "fiados"), where("cliente", "==", filtro));
+        const snap = await getDocs(q);
+        snap.forEach(async d => await deleteDoc(doc(db, "fiados", d.id)));
+
+        mostrarTicket(filtro);
+        cargarDeudas();
+    };
+
+    function mostrarTicket(cliente) {
+        const ticket = document.getElementById("ticket");
+        const overlay = document.getElementById("overlay");
+        const total = document.querySelector(`#tablaResumen tr td:last-child`).textContent;
+
+        document.getElementById("ticketCliente").textContent = `Cliente: ${cliente}`;
+        document.getElementById("ticketTotal").textContent = `Total Pagado: ${total}`;
+        document.getElementById("ticketFecha").textContent = new Date().toLocaleString();
+
+        ticket.style.display = "block";
+        overlay.style.display = "block";
+    }
+
+    window.cerrarTicket = function() {
+        document.getElementById("ticket").style.display = "none";
+        document.getElementById("overlay").style.display = "none";
+    };
+
+    window.imprimirTicket = function() {
+        window.print();
+    };
+
+    window.buscarClienteEnDeudas = function () {
+        const texto = document.getElementById("buscarCliente").value.toLowerCase();
+
+        const cuadros = document.querySelectorAll(".cliente-cuadro");
+        cuadros.forEach(cuadro => {
+            const nombre = cuadro.querySelector("h4").textContent.toLowerCase();
+            cuadro.style.display = nombre.includes(texto) ? "block" : "none";
+        });
+
+        const filas = document.querySelectorAll("#tablaResumen tr");
+        filas.forEach(fila => {
+            const nombre = fila.querySelector("td")?.textContent.toLowerCase();
+            fila.style.display = (nombre && nombre.includes(texto)) ? "" : "none";
+        });
+    };
+
+</script>
+
+</body>
+</html>
